@@ -1,0 +1,21 @@
+#!/bin/sh
+
+while true ; do
+
+	# all the way to the left
+	cansend slcan0 -i 0x14 0xff 0x51
+	sleep 5
+
+	# middle
+	cansend slcan0 -i 0x14 0x00 0x00
+	sleep 5
+	
+	# all the way to the right
+	cansend slcan0 -i 0x14 0x00 0xaf
+	sleep 5
+
+	# middle
+	cansend slcan0 -i 0x14 0x00 0x00
+	sleep 5
+
+done
