@@ -7,3 +7,5 @@ endif()
 
 # test programs
 add_executable (read-max31865 read-max31865.c)
+
+install(TARGETS joystick-canbridge read-max31865 DESTINATION bin)
