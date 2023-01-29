@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #define BITFILE_H
 
 #include <stdio.h>
+#include <stdint.h>
 #include <string>
 
 // ----------------------Xilinx .bit file format---------------------------
@@ -69,7 +70,6 @@ word. */
 
 //--------------------------------------------------------------------------------
 
-typedef unsigned char byte;
 
 class BitFile
 {
@@ -79,9 +79,9 @@ private:
     std::string date; // key 'c'
     std::string time; // key 'd'
     unsigned long length; // The length of the byte data that follows, multiply by 8 to get bitstream length.
-    byte *buffer; // Each byte is reversed, Xilinx does things MSB first and JTAG does things LSB first!
+    uint8_t *buffer; // Each byte is reversed, Xilinx does things MSB first and JTAG does things LSB first!
     std::string filename;
-    byte bitRevTable[256]; // Bit reverse lookup table
+    uint8_t bitRevTable[256]; // Bit reverse lookup table
     bool Error;
     std::string errorStr;
     FILE *logfile;
@@ -103,7 +103,7 @@ public:
     void readFile(char const *fname, bool flip=true);
 
 public:
-    inline byte *getData(){return buffer;}
+    inline uint8_t *getData(){return buffer;}
     inline unsigned long getLength(){return length*8;} // Returns length of bitstream
     inline const char *getError()
     {
