@@ -3,7 +3,10 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-#include <uvgrtp/lib.hh>
+// When compiling in-tree the uvgrtp headers are not located in a subdirectory
+// named 'uvgrtp' as follows, drop the uvgrtp subdirectory component.
+//     "#include <uvgrtp/lib.hh>"
+#include <lib.hh>
 #include <jpeglib.h>
 #include <setjmp.h>
 
@@ -15,7 +18,7 @@
 //
 uint32_t byte_counter = 0;
 
-int port = 8888; 
+int port = 8888;
 
 // Display window size
 int WINDOW_W = IMG_W;
