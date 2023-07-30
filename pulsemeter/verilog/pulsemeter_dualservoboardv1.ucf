@@ -1,0 +1,15 @@
+# Clock, there is no reset input
+NET "clk"   LOC = "PIN44";
+# NET "vhost" LOC = "PIN40";
+NET "pulse_in" LOC = "PIN20"; # J11-2
+NET "led_d2" LOC = "PIN21"; 
+NET "led_d3" LOC = "PIN22"; 
+
+#NET "servo<0>" LOC = "PIN2"; 
+#NET "servo<1>" LOC = "PIN3";
+
+# These J numbers match the SPI pinout on a UEXT 10 pin header
+NET "spi_clk"  LOC = "PIN29"; # J9-9
+NET "spi_csn"  LOC = "PIN28"; # J9-10
+NET "spi_mosi" LOC = "PIN30"; # J9-8
+NET "spi_miso" LOC = "PIN31"; # J9-7
