@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# pipe the meter log file into this script to sum gallons.
+#    ./waterlog-add < waterlog.csv
+# Or, grep through data for a given day
+#    grep 'Jun 13' waterlog.csv | ./waterlog-add
+
+# facepalm:
+#  Those two 'gal' replacements are because and eariler version
+#  of the logging program didn't put a space between the data and units.
+sed -e 's/, /,/g' -e 's/gal//g' -e 's/ gal//g' -e 's/ gpm//g' | cut -f 4 -d ',' | awk '{ sum += $1 } END { print sum }'
