@@ -79,10 +79,19 @@ struct ksvf_req {
 #define KSVF_PULSE      4
 static int svfctl(int op, struct ksvf_req* req);
 
+/* Defaults for Raspberry PI, works on all variants */
 static int tms_pin = 23;
 static int tck_pin = 24;
 static int tdi_pin = 22;
 static int tdo_pin = 17;
+static char *gpiochip = "/dev/gpiochip0";
+
+/* Defaults for aml-s905x-cc */
+#define AML_S905X_CC_TMS 97
+#define AML_S905X_CC_TCK 84
+#define AML_S905X_CC_TDI 85
+#define AML_S905X_CC_TDO 86
+#define AML_S905X_CC_CHIP "/dev/gpiochip1"
 #endif
 
 struct ksvfplay_args {
@@ -149,23 +158,50 @@ usage()
     " URL: http://elinux.org/RPi_Low-level_peripherals\n"
     "\n"
     "The following diagram shows the suggested pin numbers to use for the JTAG\n"
-    "signals.\n" 
+    "signals on Raspberry Pi.\n" 
     "\n"
-    "                          -----                             \n"
-    "           3.3V - [P1-01] |*|*| [P1-02] - 5V                \n"
-    "        I2C SDA - [P1-03] |*|*| [P1-04] - 5V                \n"
-    "        I2C SCL - [P1-05] |*|*| [P1-06] - Ground            \n"
-    "         GPIO 4 - [P1-07] |*|*| [P1-08] - UART TX           \n"
-    "         Ground - [P1-09] |*|*| [P1-10] - UART RX           \n"
-    "(TDO) - GPIO 17 - [P1-11] |*|*| [P1-12] - GPIO 18           \n"
-    "      - GPIO 27 - [P1-13] |*|*| [P1-14] - Ground            \n"
-    "(TDI) - GPIO 22 - [P1-15] |*|*| [P1-16] - GPIO 23 - (TMS)   \n"
-    "           3.3V - [P1-17] |*|*| [P1-18] - GPIO 24 - (TCK)   \n"
-    "       SPI MOSI - [P1-19] |*|*| [P1-20] - Ground            \n"
-    "       SPI MISO - [P1-21] |*|*| [P1-22] - GPIO 25           \n"
-    "       SPI SCLK - [P1-23] |*|*| [P1-24] - SPI CE0           \n"
-    "         Ground - [P1-25] |*|*| [P1-26] - SPI CE1           \n"
-    "                          -----                             \n"
+    "                                    -----                             \n"
+    "                     3.3V - [P1-01] |*|*| [P1-02] - 5V                \n"
+    "                  I2C SDA - [P1-03] |*|*| [P1-04] - 5V                \n"
+    "                  I2C SCL - [P1-05] |*|*| [P1-06] - Ground            \n"
+    "                   GPIO 4 - [P1-07] |*|*| [P1-08] - UART TX           \n"
+    "                   Ground - [P1-09] |*|*| [P1-10] - UART RX           \n"
+    "          (TDO) - GPIO 17 - [P1-11] |*|*| [P1-12] - GPIO 18           \n"
+    "                - GPIO 27 - [P1-13] |*|*| [P1-14] - Ground            \n"
+    "          (TDI) - GPIO 22 - [P1-15] |*|*| [P1-16] - GPIO 23 - (TMS)   \n"
+    "                     3.3V - [P1-17] |*|*| [P1-18] - GPIO 24 - (TCK)   \n"
+    "                 SPI MOSI - [P1-19] |*|*| [P1-20] - Ground            \n"
+    "                 SPI MISO - [P1-21] |*|*| [P1-22] - GPIO 25           \n"
+    "                 SPI SCLK - [P1-23] |*|*| [P1-24] - SPI CE0           \n"
+    "                   Ground - [P1-25] |*|*| [P1-26] - SPI CE1           \n"
+    "                                    -----                             \n"
+    "\n"
+    "The following diagram shows the suggested pin numbers to use for the JTAG\n"
+    "signals on AML-S905x-CC. This board has 2x gpio chips. The way code is \n"
+    "structured all JTAG pins need to be on the same chip.\n" 
+    "\n"
+    "                                    -----                            \n"
+    "                    3.3V - [7J1-01] |*|*| [7J1-02] - 5V              \n"
+    "                 I2C SDA - [7J1-03] |*|*| [7J1-04] - 5V              \n"
+    "                 I2C SCL - [7J1-05] |*|*| [7J1-06] - Ground          \n"
+    "                         - [7J1-07] |*|*| [7J1-08] - UART TX         \n"
+    "                  Ground - [7J1-09] |*|*| [7J1-10] - UART RX         \n"
+    "                         - [7J1-11] |*|*| [7J1-12] -                 \n"
+    "                         - [7J1-13] |*|*| [7J1-14] - Ground          \n"
+    "                         - [7J1-15] |*|*| [7J1-16] -                 \n"
+    "                    3.3V - [7J1-17] |*|*| [7J1-18] -                 \n"
+    "                SPI MOSI - [7J1-19] |*|*| [7J1-20] - Ground          \n"
+    "                SPI MISO - [7J1-21] |*|*| [7J1-22] -                 \n"
+    "                SPI SCLK - [7J1-23] |*|*| [7J1-24] - SPI CE0         \n"
+    "                  Ground - [7J1-25] |*|*| [7J1-26] - SPI CE1         \n"
+    "                         - [7J1-27] |*|*| [7J1-28] -                 \n"
+    "                         - [7J1-29] |*|*| [7J1-30] - Ground          \n"
+    " (TMS) GPIOX_18, line 97 - [7J1-31] |*|*| [7J1-32] -                 \n"
+    " (TDI) GPIOX_06, line 85 - [7J1-33] |*|*| [7J1-34] - Ground          \n"
+    " (TDO) GPIOX_07, line 86 - [7J1-35] |*|*| [7J1-36] -                 \n"
+    " (TCK) GPIOX_05, line 84 - [7J1-37] |*|*| [7J1-38] -                 \n"
+    "                  Ground - [7J1-39] |*|*| [7J1-40] -                 \n"
+    "                                    -----                            \n"
     "\n"
     "NOTE: The Linux port is a work in progress. JTAG signals are\n"
     "hard coded as shown and the -d argument is ignored\n";
@@ -463,6 +499,34 @@ main(int argc, char *argv[])
     struct ksvfplay_args svf_args;
     memset(&svf_args, 0, sizeof(svf_args));
 
+    /* If running on aml-s905x-cc then adjust the gpiochip and pins */
+    FILE *mfp = fopen("/sys/firmware/devicetree/base/model", "r");
+    if (mfp) {
+        char dtmodel[256];
+        memset(dtmodel, 0, sizeof(dtmodel));
+        if (fgets(dtmodel, sizeof(dtmodel), mfp) > 0) {
+            if (strstr(dtmodel, "aml-s905x-cc")) {
+                fprintf(stderr, "Detected AML-S905X-CC\n");
+                tms_pin = AML_S905X_CC_TMS;
+                tck_pin = AML_S905X_CC_TCK;
+                tdi_pin = AML_S905X_CC_TDI;
+                tdo_pin = AML_S905X_CC_TDO;
+                gpiochip = AML_S905X_CC_CHIP;
+            } else if (strstr(dtmodel, "Raspberry")) {
+                fprintf(stderr, "Detected Raspberry Pi\n");
+            } else {
+                fprintf(stderr, "WARNING: Undefined Board Type!\n");
+            }
+        } 
+        fclose(mfp);
+    }
+
+    fprintf(stderr, "Using Pin Configuration:\n");
+    fprintf(stderr, " gpiochip=%s,", gpiochip);
+    fprintf(stderr, " TMS=%d, TCK=%d, TDI=%d, TDO=%d\n",
+                            tms_pin, tck_pin, tdi_pin, tdo_pin);
+    fprintf(stderr, "\n");
+
     int ch;
     while((ch = getopt(argc, argv, "hHaf:d:ip")) != -1) {
         switch(ch) {
@@ -673,9 +737,7 @@ svfctl(int cmd, struct ksvf_req *req)
     
     switch (cmd) {
         case KSVF_INIT:
-            // TODO:
-            // gpiochip needs to be selectable
-            chip_fd = open("/dev/gpiochip0", O_RDONLY);
+            chip_fd = open(gpiochip, O_RDONLY);
             if (chip_fd < 0) {
                 fprintf(stderr, "unable to open gpiochip0\n");
                 return -1;
