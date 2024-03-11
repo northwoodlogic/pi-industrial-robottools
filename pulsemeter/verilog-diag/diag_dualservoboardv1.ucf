@@ -1,0 +1,21 @@
+# Clock, there is no reset input
+NET "clk"       LOC = "PIN44";
+NET "pulse_in"  LOC = "PIN12"; # J8-1
+NET "led_d2"    LOC = "PIN21"; 
+NET "led_d3"    LOC = "PIN22"; 
+
+# These nets are all open drain, active low = asserted.
+NET "opto_ch0"  LOC = "PIN38"; # J9-4,  240Vac pressure switch status (input)
+NET "opto_ch1"  LOC = "PIN32"; # J9-6,  spare                      (input)
+NET "opto_ch2"  LOC = "PIN30"; # J9-8,  24Vac power good status    (input)
+NET "opto_ch3"  LOC = "PIN28"; # J9-10, 24Vac relay coil enable    (output)
+
+NET "uart_tx"   LOC = "PIN19"; # J13-2
+NET "uart_rx"   LOC = "PIN20"; # J11-2
+
+NET "sig_0"     LOC = "PIN3";  # J6-1,  Relay coil inhibit status  (output)
+NET "sig_1"     LOC = "PIN2";  # J7-1,  Pressure switch status     (output)
+NET "sig_2"     LOC = "PIN5";  # J8-9,  UART Loopback test enable  (input)
+NET "sig_3"     LOC = "PIN6";  # J8-7,  UART enable                (input)
+NET "sig_4"     LOC = "PIN7";  # J8-5,  Relay coil inhibit clear   (input)
+NET "sig_5"     LOC = "PIN8";  # J8-3,  Relay coid inhibit set     (input)

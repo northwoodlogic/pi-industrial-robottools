@@ -120,7 +120,7 @@ main(int argc, char *argv[])
         int i = 0;
 
         while ((opt = getopt(argc, argv, "hs:d:f:")) != -1) {
-            switch (opt) {
+           switch (opt) {
                 case 'h':
                     show_help();
                     return 0;
@@ -172,7 +172,7 @@ main(int argc, char *argv[])
              * verify a working SPI bus.
              */
             if ((rx & 0xffff0000) != 0xbeef0000) {
-                fprintf(stderr, "SPI chain broken!\n");
+                fprintf(stderr, "SPI chain broken! got 0x%08X\n", rx);
                 continue;
             }
 
