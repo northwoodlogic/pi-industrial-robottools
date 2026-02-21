@@ -99,39 +99,36 @@ main(int argc, char **argv)
 	int inhibit_sts_last = inhibit_sts;
 	
 	while (true) {
-          	time_t now = time(NULL);
+		time_t now = time(NULL);
 
-			pump_sts = gpiod_line_get_value(pmon.iosts);
-			if (pump_sts != pump_sts_last) {
-                fprintf(pmon.pumplf,
-					"%s, %s\n", strtok(ctime(&now), "\n"), pump_sts ? "pump_on" : "pump_off");
-				fflush(pmon.pumplf);
-			}
+		pump_sts = gpiod_line_get_value(pmon.iosts);
+		if (pump_sts != pump_sts_last) {
+			fprintf(pmon.pumplf,
+				"%s, %s\n", strtok(ctime(&now), "\n"), pump_sts ? "pump_on" : "pump_off");
+			fflush(pmon.pumplf);
+		}
 
-			inhibit_sts = gpiod_line_get_value(pmon.inhsts);
-			if (inhibit_sts != inhibit_sts_last) {
-                fprintf(pmon.pumplf,
-					"%s, %s\n", strtok(ctime(&now), "\n"), inhibit_sts ? "inhibit_on" : "inhibit_off");
-				fflush(pmon.pumplf);
+		inhibit_sts = gpiod_line_get_value(pmon.inhsts);
+		if (inhibit_sts != inhibit_sts_last) {
+			fprintf(pmon.pumplf,
+				"%s, %s\n", strtok(ctime(&now), "\n"), inhibit_sts ? "inhibit_on" : "inhibit_off");
+			fflush(pmon.pumplf);
+		}
 
-			}
+		/* If the trigger file exists then pulse the inhibit enable signal, else pulse the clear */ 
+		struct stat sb;
+		memset(&sb, 0, sizeof(sb));
+		if (stat("/data/.inhibit", &sb) == 0) {
+			pulse_line(pmon.inhset);
+		} else {
+			pulse_line(pmon.inhclr);
+		}
 
-			/* If the trigger file exists then pulse the inhibit enable signal, else pulse the clear */ 
-			struct stat sb;
-			memset(&sb, 0, sizeof(sb));
-			if (stat("/data/.inhibit", &sb) == 0) {
-				pulse_line(pmon.inhset);
-			} else {
-				pulse_line(pmon.inhclr);
-			}
-
-
-			pump_sts_last = pump_sts;
-			inhibit_sts_last = inhibit_sts;
-			sleep(1);
+		pump_sts_last = pump_sts;
+		inhibit_sts_last = inhibit_sts;
+		sleep(1);
 	}
 	
 	return 0;
 }
-
 
