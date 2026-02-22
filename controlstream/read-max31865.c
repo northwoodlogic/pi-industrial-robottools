@@ -6,6 +6,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <fcntl.h>
+#include <time.h>
 #include <sys/ioctl.h>
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
@@ -69,7 +70,10 @@ spi_read(int fd, uint8_t cmd, uint8_t *rsp, int len)
     };
 
     // Do the transfer here
-    return ioctl(fd, SPI_IOC_MESSAGE(2), tr) < 1 ? -1 : 0;
+    errno = 0;
+    int rc = ioctl(fd, SPI_IOC_MESSAGE(2), tr);// < 1 ? -1 : 0;
+    // printf("IOCTL rc=%d errno=%d (%s)\n", rc, errno, strerror(errno));
+    return rc < 1 ? -1 : 0;
 }
 
 int
@@ -111,7 +115,7 @@ spi_open(const char *device)
     int ret = 0;
     uint32_t mode = 3;
     uint8_t bits = 8;
-    uint32_t speed = 100000;
+    uint32_t speed = 1000000; // looks like aml spicc has minimum speed
     int fd = open(device, O_RDWR);
     const char *msg = NULL;
     do {
@@ -182,24 +186,36 @@ spi_open(const char *device)
 int
 main(int argc, char *argv[])
 {
-	int fd = spi_open("/dev/spidev0.0");
+	const char *dev = "/dev/spidev0.0";
+	const char* spidev = getenv("SPIDEV");
+	if (spidev)
+		dev = spidev;
+
+	fprintf(stderr, "Using device: %s\n", dev);
+	int fd = spi_open(dev);
 	if (fd < 0)
 		return 1;
 
 	uint8_t cfg = 0;
-	spi_read(fd, 0x00, &cfg, sizeof(cfg));
-	printf("Config bits: 0x%02X\n", (uint32_t)cfg);
-	cfg = 0xC0;
+	if (spi_read(fd, 0x00, &cfg, sizeof(cfg)) < 0) {
+		printf("SPI Read failed\n");
+	}
+	fprintf(stderr, "Config bits: 0x%02X\n", (uint32_t)cfg);
+	cfg = 0xD0 | (1 << 1); // setup bias on, continuous conversion, 3 wire mode, clear fault
+	// cfg = 0xC0 | (1 << 1); // setup bias on, continuous conversion, 2 wire mode, clear fault
 	spi_write(fd, 0x80, &cfg, sizeof(cfg));
-	printf("wrote configuration: 0x%02X\n", (uint32_t)cfg);
+	fprintf(stderr, "wrote configuration: 0x%02X\n", (uint32_t)cfg);
 	spi_read(fd, 0x00, &cfg, sizeof(cfg));
-	printf("Config bits: 0x%02X\n", (uint32_t)cfg);
-
+	fprintf(stderr, "Config bits: 0x%02X\n", (uint32_t)cfg);
+#if 0
+	cfg = 0xAA;
 	spi_read(fd, 0x03, &cfg, sizeof(cfg));
 	printf("HFT bits: 0x%02X\n", (uint32_t)cfg);
 
+	cfg = 0x55;
 	spi_read(fd, 0x04, &cfg, sizeof(cfg));
 	printf("HFT bits: 0x%02X\n", (uint32_t)cfg);
+#endif
 
 	while (1) {
 		sleep(1);
@@ -208,19 +224,27 @@ main(int argc, char *argv[])
 		uint32_t val = ((uint32_t)rx[0]) << 8 | (uint32_t)rx[1];
 
 		if (val & 1) {
-			printf("Conversion fault!\n");
+			fprintf(stderr, "Conversion fault!\n");
+			spi_read(fd, 0x07, &cfg, sizeof(cfg));
+			fprintf(stderr, "fault bits: 0x%02X\n", (uint32_t)cfg);
 			continue;
 		}
 
-		// that 6.5 is trying to account for error in the reference
-		// resistance.
-
 		val = val >> 1; // the lowest bit is a fault bit
-		double rrtd = ((double)val * (REF_VAL + 6.5)) / 32768.0;
+		double rrtd = ((double)val * (REF_VAL)) / 32768.0;
 		double degc = celsius_rationalpolynomial(rrtd);
 		double degf = (degc * (9.0 / 5.0)) + 32.0;
-		printf("Conversion Result: %u Rrtd=%f, degC=%f, degF=%f\n",
+		time_t now = time(NULL);
+
+		printf("%s,adc=%u,Rrtd=%f,degC=%f,degF=%f\n",
+			strtok(ctime(&now), "\n"),
 			val, rrtd, degc, degf);
+		fflush(stdout);
+
+		
+		// force clear any faults
+		cfg = 0xD0 | (1 << 1); // setup bias on, continuous conversion, 3 wire mode, clear fault
+		spi_write(fd, 0x80, &cfg, sizeof(cfg));
 	}
 	return 0;
 }
