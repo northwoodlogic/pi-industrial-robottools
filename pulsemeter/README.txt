@@ -65,9 +65,14 @@ A detailed datasheet for the water meter may be found at the following link:
 The Other Implementation
 ========================
 
+The Verilog and ISE project for this CPLD board is in the 'verilog-diag'
+subdirectory relative to this readme. Load in the svf file called
+'pulsemeter-io.svf'
+
 The SPI controller on the AML-S905X-CC board is too fast for the CPLD board.
 Instead of using SPI it uses a UART + some GPIO lines. Plus, this is more than
 just the pulsemeter. It's also the pump status and inhibit control.
+
 
 SBC to I/O board:
 
